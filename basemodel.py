@@ -10,33 +10,32 @@ class ProfileSchema(BaseModel):
 
 
 class InterviewTranscriptSchema(BaseModel):
-    user_id: str
-    interview_name: str
-    category: str
-    subCategory: str
-    optional_subject: str
-    gap_years: str
-    year_of_interview: str
-    specialization: str
-    work_experience: str
-    exam_scores: str
-    visa_type: str
-    country_applied_for_visa: str
-    purpose_of_travel: str
-    programming_languages: List[str]
-    tech_stack_used: List[str]
-    problem_solving_approach: str
-    branch: str
-    commision_type: str
-    bank_name: str
-    selection_process_details: str
-    interview_experience: str
-    interview_tips: str
-    rating: float
-    date: str
-    category_slug: str
-    slug: str
-    questions_answers: List[Dict[str, str]]
+    user_id: str = ""
+    interview_name: str = ""
+    category: str = ""
+    subCategory: str = ""
+    optional_subject: str = ""
+    gap_years: str = ""
+    year_of_interview: str = ""
+    specialization: str = ""
+    work_experience: str = ""
+    exam_scores: str = ""
+    visa_type: str = ""
+    country_applied_for_visa: str = ""
+    purpose_of_travel: str = ""
+    programming_languages: str = ""
+    tech_stack_used: str = ""
+    branch: str = ""
+    commision_type: str = ""
+    bank_name: str = ""
+    interview_experience: str = ""
+    interview_tips: str = ""
+    rating: float = 0.0
+    date: str = ""
+    category_slug: str = ""
+    slug: str = ""
+    additional_info: str = ""
+    questions_answers: List[Dict[str, str]] = []
     
 class SignUpRequest(BaseModel):
     name: str
@@ -49,6 +48,7 @@ class SignInRequest(BaseModel):
     password: str
 
 class TranscriptRequestBody(BaseModel):
+    token: str
     interview_name: str
     category: str
     subCategory: str
@@ -61,13 +61,11 @@ class TranscriptRequestBody(BaseModel):
     visa_type: str
     country_applied_for_visa: str
     purpose_of_travel: str
-    programming_languages: List[str]
-    tech_stack_used: List[str]
-    problem_solving_approach: str
+    programming_languages: str
+    tech_stack_used: str
     branch: str
     commision_type: str
     bank_name: str
-    selection_process_details: str
     interview_experience: str
     interview_tips: str
     rating: float

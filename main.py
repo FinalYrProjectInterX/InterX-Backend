@@ -48,7 +48,13 @@ async def sign_up(signup_request: SignUpRequest):
             "password": hashed_password,
         })
 
-        return {"message": "User signed up successfully."}
+        token_data = {
+            "email": profile.email,
+            "exp": datetime.now(timezone.utc)+ timedelta(days=2)
+        }
+        token = jwt.encode(token_data, SECRET_KEY, algorithm="HS256")
+
+        return {"message": "User signed up successfully.", "authToken":token}
     except Exception as e:
         raise HTTPException(status_code=500, detail="An error occurred while signing up")
 
@@ -73,7 +79,7 @@ async def sign_in(signin_request: SignInRequest):
         }
         token = jwt.encode(token_data, SECRET_KEY, algorithm="HS256")
 
-        return {"token": token}
+        return {"authToken": token}
     except Exception as e:
         raise HTTPException(status_code=500, detail="An error occurred while logging in")
 
@@ -90,7 +96,7 @@ async def create_transcript(transcript: InterviewTranscriptSchema):
 
 
 
-async def authenticate_user(token):
+async def authenticate_user(token: str):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
         return payload
@@ -98,32 +104,27 @@ async def authenticate_user(token):
         raise HTTPException(status_code=401, detail="Could not validate credentials")
 
 
-@app.post("/transcripts/create_transcript", response_model=InterviewTranscriptSchema)
+@app.post("/transcripts/create_transcript")
 async def create_transcript(
-    transcript: TranscriptRequestBody,
-    Authorization: str = Header()):
+    transcript: TranscriptRequestBody):
 
-    # Check if Authorization header is provided
+    transcript = transcript.dict()
     print(transcript)
-    print(Authorization)
-    if Authorization is None:
-        raise HTTPException(status_code=401, detail="Authorization header is missing")
-
-    # Extract JWT token from Authorization header
-    token = Authorization.split(" ")[1]  # Assuming the header format is "Bearer <token>"
-
-    # Authenticate the user using the JWT token
-    current_user = authenticate_user(token)
-    print(current_user)
+    token = transcript.get("token")
+    print(token)
+    if not token:
+        raise HTTPException(status_code=401, detail="Token not provided in the request.")
+    
+    current_user = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
     user_id = current_user["email"]  
-    transcript_with_user_id = transcript.dict()
+    transcript_with_user_id = transcript
     transcript_with_user_id["user_id"] = user_id
     transcript_with_user_id["date"] = datetime.utcnow().isoformat()
     # Insert transcript into database
     result = db.transcripts.insert_one(transcript_with_user_id)
 
     # Return the inserted transcript with its generated _id
-    return {**transcript_with_user_id, "_id": str(result.inserted_id)}
+    return {"message":"Transcript Created successfully", "_id": str(result.inserted_id)}
 
 
 
