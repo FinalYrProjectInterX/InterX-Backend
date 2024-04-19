@@ -36,7 +36,7 @@ class InterviewTranscriptSchema(BaseModel):
     date: str
     category_slug: str
     slug: str
-    questions_answers: Dict[str, str]
+    questions_answers: List[Dict[str, str]]
     
 class SignUpRequest(BaseModel):
     name: str
@@ -73,4 +73,4 @@ class TranscriptRequestBody(BaseModel):
     rating: float
     category_slug: str
     slug: str
-    questions_answers: Dict[str, str]
+    questions_answers: List[Dict[str, str]]

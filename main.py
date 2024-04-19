@@ -29,8 +29,9 @@ SECRET_KEY = "mitali"
 
 @app.post("/signup/")
 async def sign_up(signup_request: SignUpRequest):
-    profile = signup_request.profile
-
+    print(signup_request)
+    profile = signup_request
+    print(profile)
     try:
         # Check if user with email already exists
         if db.profiles.find_one({"email": profile.email}):
@@ -89,7 +90,7 @@ async def create_transcript(transcript: InterviewTranscriptSchema):
 
 
 
-async def authenticate_user(token: str):
+async def authenticate_user(token):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
         return payload
@@ -100,9 +101,21 @@ async def authenticate_user(token: str):
 @app.post("/transcripts/create_transcript", response_model=InterviewTranscriptSchema)
 async def create_transcript(
     transcript: TranscriptRequestBody,
-    current_user: ProfileSchema = Depends(authenticate_user)):
-    # Associate transcript with the currently logged-in user
-    user_id = current_user["email"]  # Assuming the email is stored in the payload
+    Authorization: str = Header()):
+
+    # Check if Authorization header is provided
+    print(transcript)
+    print(Authorization)
+    if Authorization is None:
+        raise HTTPException(status_code=401, detail="Authorization header is missing")
+
+    # Extract JWT token from Authorization header
+    token = Authorization.split(" ")[1]  # Assuming the header format is "Bearer <token>"
+
+    # Authenticate the user using the JWT token
+    current_user = authenticate_user(token)
+    print(current_user)
+    user_id = current_user["email"]  
     transcript_with_user_id = transcript.dict()
     transcript_with_user_id["user_id"] = user_id
     transcript_with_user_id["date"] = datetime.utcnow().isoformat()
