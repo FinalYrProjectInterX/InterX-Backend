@@ -35,6 +35,7 @@ class InterviewTranscriptSchema(BaseModel):
     category_slug: str = ""
     slug: str = ""
     additional_info: str = ""
+    status: str = "Pending"
     questions_answers: List[Dict[str, str]] = []
     
 class SignUpRequest(BaseModel):
@@ -71,4 +72,11 @@ class TranscriptRequestBody(BaseModel):
     rating: float
     category_slug: str
     slug: str
+    status: str
     questions_answers: List[Dict[str, str]]
+
+class getTranscriptByCategoryRequestBody(BaseModel):
+    category_slug: str
+
+class getTranscriptByStatusRequestBody(BaseModel):
+    status: str
