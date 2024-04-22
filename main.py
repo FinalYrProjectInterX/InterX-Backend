@@ -237,19 +237,19 @@ async def get_transcripts_by_status(reqBody: getTranscriptByStatusRequestBody):
 
 
 
-
-@app.delete("/transcripts/{transcript_id}")
-async def delete_transcript(transcript_id: str):
-    result = db.transcripts.delete_one({"_id": ObjectId(transcript_id)})
+@app.delete("/transcripts/{transcript_slug}")
+async def delete_transcript(transcript_slug: str):
+    result = db.transcripts.delete_one({"slug": transcript_slug})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Transcript not found")
     return {"message": "Transcript deleted successfully"}
 
 
-
-@app.put("/transcripts/{transcript_id}",response_model=InterviewTranscriptSchema)
-async def update_transcript(transcript_id: str, transcript: InterviewTranscriptSchema):
-    result = db.transcripts.update_one({"_id": ObjectId(transcript_id)}, {"$set": transcript})
+'''
+@app.put("/transcripts/{transcript_slug}", response_model=InterviewTranscriptSchema)
+async def update_transcript(transcript_slug: str, transcript: InterviewTranscriptSchema):
+    result = db.transcripts.update_one({"slug": transcript_slug}, {"$set": transcript.dict()})
     if result.modified_count == 0:
         raise HTTPException(status_code=404, detail="Transcript not found")
     return {"message": "Transcript updated successfully"}
+'''
