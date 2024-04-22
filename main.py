@@ -108,14 +108,69 @@ async def sign_in(signin_request: SignInRequest):
         raise HTTPException(status_code=400, detail="Invalid Credentials!!")
 
 '''
-@app.post("/transcripts/", response_model=InterviewTranscriptSchema)
-async def create_transcript(transcript: InterviewTranscriptSchema):
-    # Insert transcript into database
-    result = db.transcripts.insert_one(transcript.dict())
+# Endpoint for approving transcripts
+@app.put("/admin/transcripts/approve/{transcript_id}")
+async def approve_transcript(transcript_id: str):
+    try:
+        # Update the status of the transcript to "Approved"
+        result = db.transcripts.update_one({"_id": ObjectId(transcript_id)}, {"$set": {"status": "Approved"}})
+        
+        # Check if the transcript was found and updated
+        if result.modified_count == 0:
+            raise HTTPException(status_code=404, detail="Transcript not found")
+        
+        return {"message": "Transcript approved successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An error occurred while approving transcript")
 
-    # Return the inserted transcript with its generated _id
-    return {**transcript.dict(), "_id": str(result.inserted_id)}
-  ''' 
+
+# Endpoint for rejecting transcripts
+@app.put("/admin/transcripts/reject/{transcript_id}")
+async def reject_transcript(transcript_id: str):
+    try:
+        # Update the status of the transcript to "Rejected"
+        result = db.transcripts.update_one({"_id": ObjectId(transcript_id)}, {"$set": {"status": "Rejected"}})
+        
+        # Check if the transcript was found and updated
+        if result.modified_count == 0:
+            raise HTTPException(status_code=404, detail="Transcript not found")
+        
+        return {"message": "Transcript rejected successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An error occurred while rejecting transcript")
+'''
+
+
+@app.put("/admin/transcripts/approve/{transcript_slug}")
+async def approve_transcript(transcript_slug: str):
+    try:
+        # Update the status of the transcript to "Approved"
+        result = db.transcripts.update_one({"slug": transcript_slug}, {"$set": {"status": "Approved"}})
+        
+        # Check if the transcript was found and updated
+        if result.modified_count == 0:
+            raise HTTPException(status_code=404, detail="Transcript not found")
+        
+        return {"message": "Transcript approved successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An error occurred while approving transcript")
+
+
+
+@app.put("/admin/transcripts/reject/{transcript_slug}")
+async def reject_transcript(transcript_slug: str):
+    try:
+        # Update the status of the transcript to "Rejected"
+        result = db.transcripts.update_one({"slug": transcript_slug}, {"$set": {"status": "Rejected"}})
+        
+        # Check if the transcript was found and updated
+        if result.modified_count == 0:
+            raise HTTPException(status_code=404, detail="Transcript not found")
+        
+        return {"message": "Transcript rejected successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An error occurred while rejecting transcript")
+
 
 async def authenticate_user(token: str):
     try:
@@ -147,6 +202,7 @@ async def create_transcript(
     # Return the inserted transcript with its generated _id
     return {"message":"Transcript Created successfully", "_id": str(result.inserted_id)}
 
+
 @app.post("/transcripts/get_transcripts_by_category_slug", response_model=List[InterviewTranscriptSchema])
 async def get_transcripts_by_category_slug(reqBody: getTranscriptByCategoryRequestBody):
     try:
@@ -156,6 +212,7 @@ async def get_transcripts_by_category_slug(reqBody: getTranscriptByCategoryReque
         return transcripts
     except Exception as e:
         raise HTTPException(status_code=400, detail="Some Error Occurred: " + str(e))
+
 
 @app.post("/transcripts/get_transcript_by_url_slug", response_model=InterviewTranscriptSchema)
 async def get_transcript_by_url_slug(reqBody: getTranscriptByCategoryRequestBody):
@@ -167,6 +224,7 @@ async def get_transcript_by_url_slug(reqBody: getTranscriptByCategoryRequestBody
     except Exception as e:
         raise HTTPException(status_code=400, detail="Some Error Occurred: " + str(e))
     
+    
 @app.post("/transcripts/get_transcripts_by_status", response_model=List[InterviewTranscriptSchema])
 async def get_transcripts_by_status(reqBody: getTranscriptByStatusRequestBody):
     try:
@@ -177,33 +235,7 @@ async def get_transcripts_by_status(reqBody: getTranscriptByStatusRequestBody):
     except Exception as e:
         raise HTTPException(status_code=400, detail="Some Error Occurred: " + str(e))
 
-@app.get("/transcripts/{transcript_id}", response_model=InterviewTranscriptSchema)
-async def get_transcript(transcript_id: str):
-    # Convert transcript_id to ObjectId
-    try:
-        transcript_oid = ObjectId(transcript_id)
-    except Exception:
-        raise HTTPException(status_code=400, detail="Invalid transcript ID")
 
-    # Fetch transcript from the database
-    transcript = db.transcripts.find_one({"_id": transcript_oid})
-
-    # Check if transcript exists
-    if not transcript:
-        raise HTTPException(status_code=404, detail="Transcript not found")
-
-    # Return the transcript
-    return transcript
-
-'''
-@app.get("/transcripts/",response_model=List[InterviewTranscriptSchema])
-async def get_transcripts():
-    transcripts = list(db.transcripts.find())
-    for transcript in transcripts:
-        transcript['_id'] = str(transcript['_id'])
-        transcript['user_id'] = str(transcript['user_id'])
-    return transcripts
-'''
 
 
 @app.delete("/transcripts/{transcript_id}")
