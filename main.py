@@ -3,7 +3,7 @@ from pydantic import BaseModel,EmailStr
 from database import db
 from bson import ObjectId  #unique ids assigned to each doc in mongo db
 from typing import List, Dict
-from basemodel import ProfileSchema,InterviewTranscriptSchema,SignUpRequest,SignInRequest, TranscriptRequestBody, getTranscriptByCategoryRequestBody, getTranscriptByStatusRequestBody
+from basemodel import ProfileSchema,InterviewTranscriptSchema,SignUpRequest,SignInRequest, TranscriptRequestBody, getTranscriptByCategoryRequestBody, getTranscriptByStatusRequestBody,requestUserProfile,UpdateUserProfileRequest,UpdateTranscriptRequest
 from datetime import datetime, timezone,timedelta
 import hashlib
 from jose import jwt, JWTError
@@ -180,6 +180,81 @@ async def authenticate_user(token: str):
         raise HTTPException(status_code=401, detail="Could not validate credentials")
 
 
+
+@app.post("/profile", response_model=ProfileSchema)
+async def get_user_profile(user_info: requestUserProfile):
+    try:
+        token = user_info.token
+
+        # Check if token is provided
+        if not token:
+            raise HTTPException(status_code=401, detail="Token not provided in the request.")
+
+        # Decode and validate token
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        user_email = payload["email"]
+
+        # Retrieve user profile from the database based on the email
+        user_profile = db.profiles.find_one({"email": user_email})
+        if not user_profile:
+            raise HTTPException(status_code=404, detail="User profile not found")
+
+        return user_profile
+    except JWTError as e:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An error occurred while fetching user profile")
+
+
+
+@app.put("/transcripts/update")
+async def update_transcript(transcript_info: UpdateTranscriptRequest):
+    try:
+        # Extract the ObjectId from the request body and convert it to ObjectId instance
+        transcript_object_id = ObjectId(transcript_info.transcript_id)
+
+        # Retrieve the existing transcript from the database
+        existing_transcript = db.transcripts.find_one({"_id": transcript_object_id})
+        if not existing_transcript:
+            raise HTTPException(status_code=404, detail="Transcript not found")
+
+        # Prepare the update fields
+        update_fields = {}
+
+        # Iterate over each field in the UpdateTranscriptRequest model
+        for field, value in transcript_info.dict().items():
+            # Skip the transcript_id field
+            if field == "transcript_id":
+                continue
+            
+            # Compare the field value with the existing transcript
+            existing_value = existing_transcript.get(field)
+            if value != existing_value:
+                update_fields[field] = value
+            else:
+                # If the values are the same, keep the existing value
+                update_fields[field] = existing_value
+
+        # Include unchanged fields in the update operation
+        for field, value in existing_transcript.items():
+            if field not in update_fields:
+                update_fields[field] = value
+
+        # Update the existing transcript with the changes from the update request
+        if update_fields:
+            db.transcripts.update_one(
+                {"_id": transcript_object_id},
+                {"$set": update_fields}
+            )
+
+        # Fetch the updated transcript from the database
+        updated_transcript = db.transcripts.find_one({"_id": transcript_object_id})
+        updated_transcript_data = UpdateTranscriptRequest(**updated_transcript)
+        return updated_transcript_data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An error occurred while updating transcript")
+    
+
 @app.post("/transcripts/create_transcript")
 async def create_transcript(
     transcript: TranscriptRequestBody):
@@ -234,22 +309,78 @@ async def get_transcripts_by_status(reqBody: getTranscriptByStatusRequestBody):
         return transcripts
     except Exception as e:
         raise HTTPException(status_code=400, detail="Some Error Occurred: " + str(e))
+    
+    
+    
+@app.put("/transcripts",response_model=InterviewTranscriptSchema)
+async def update_transcript(transcript_info: UpdateTranscriptRequest):
+    try:
+        # Extract the ObjectId from the request body and convert it to ObjectId instance
+        transcript_object_id = ObjectId(transcript_info.transcript_id)
+
+        # Retrieve the existing transcript from the database
+        existing_transcript = db.transcripts.find_one({"_id": transcript_object_id})
+        if not existing_transcript:
+            raise HTTPException(status_code=404, detail="Transcript not found")
+
+        # Prepare the update fields
+        update_fields = {}
+
+        # Iterate over each field in the UpdateTranscriptRequest model
+        for field, value in transcript_info.dict().items():
+            # Skip the transcript_id field
+            if field == "transcript_id":
+                continue
+            
+            # Compare the field value with the existing transcript
+            existing_value = existing_transcript.get(field)
+            if value != existing_value:
+                update_fields[field] = value
+            else:
+                # If the value is unchanged, retain the existing value in update_fields
+                update_fields[field] = existing_value
+
+        # Include unchanged fields in the update operation
+        for field, value in existing_transcript.items():
+            if field not in update_fields:
+                # Only include unchanged fields in the update_fields dictionary
+                update_fields[field] = value
+
+        # Fetch the updated transcript from the database
+        updated_transcript = db.transcripts.find_one({"_id": transcript_object_id})
+        updated_transcript_data = InterviewTranscriptSchema(**updated_transcript)
+        return updated_transcript_data
+
+    except HTTPException as e:
+        # If the error is already an HTTPException, just re-raise it
+        raise e
+    except ValidationError as e:
+        # If there's a validation error (e.g., invalid ObjectId), return a 400 Bad Request
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        # For other errors, return a 500 Internal Server Error
+        raise HTTPException(status_code=500, detail="An error occurred while updating transcript")
 
 
 
-@app.delete("/transcripts/{transcript_slug}")
-async def delete_transcript(transcript_slug: str):
-    result = db.transcripts.delete_one({"slug": transcript_slug})
-    if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Transcript not found")
-    return {"message": "Transcript deleted successfully"}
+@app.delete("/transcripts/{transcript_id}")
+async def delete_transcript(transcript_id: str):
+    try:
+        # Convert the transcript_id string to ObjectId
+        transcript_object_id = ObjectId(transcript_id)
 
+        # Check if the transcript exists in the database
+        existing_transcript = db.transcripts.find_one({"_id": transcript_object_id})
+        if not existing_transcript:
+            raise HTTPException(status_code=404, detail="Transcript not found")
 
-'''
-@app.put("/transcripts/{transcript_slug}", response_model=InterviewTranscriptSchema)
-async def update_transcript(transcript_slug: str, transcript: InterviewTranscriptSchema):
-    result = db.transcripts.update_one({"slug": transcript_slug}, {"$set": transcript.dict()})
-    if result.modified_count == 0:
-        raise HTTPException(status_code=404, detail="Transcript not found")
-    return {"message": "Transcript updated successfully"}
-'''
+        # Delete the transcript from the database
+        db.transcripts.delete_one({"_id": transcript_object_id})
+
+        # Return a success message
+        return {"message": "Transcript deleted successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An error occurred while deleting transcript")
+    
+    
+
