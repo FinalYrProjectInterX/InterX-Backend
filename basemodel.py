@@ -62,6 +62,7 @@ class SignInRequest(BaseModel):
 
 class TranscriptRequestBody(BaseModel):
     token: str
+    user_name: str
     interview_name: str
     category: str
     subCategory: str
@@ -90,6 +91,8 @@ class TranscriptRequestBody(BaseModel):
 
 class getTranscriptByCategoryRequestBody(BaseModel):
     category_slug: str
+    
+    
 
 class getTranscriptByStatusRequestBody(BaseModel):
     status: str
