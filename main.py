@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, Depends,Header,Security
 from pydantic import BaseModel,EmailStr
 from database import db
 from bson import ObjectId  #unique ids assigned to each doc in mongo db
-from typing import List, Dict, Any
+from typing import List, Dict
 from basemodel import ProfileSchema,InterviewTranscriptSchema,SignUpRequest,SignInRequest, TranscriptRequestBody, getTranscriptByCategoryRequestBody, getTranscriptByStatusRequestBody,requestUserProfile,UpdateUserProfileRequest,UpdateTranscriptRequest
 from datetime import datetime, timezone,timedelta
 import hashlib
@@ -207,52 +207,42 @@ async def get_user_profile(user_info: requestUserProfile):
 
 
 
-@app.put("/transcripts/update")
-async def update_transcript(transcript_info: UpdateTranscriptRequest):
+@app.put("/profile/update")
+async def update_user_profile(profile_info: UpdateUserProfileRequest):
     try:
-        # Extract the ObjectId from the request body and convert it to ObjectId instance
-        transcript_object_id = ObjectId(transcript_info.transcript_id)
+        # Decode and validate token
+        payload = jwt.decode(profile_info.token, SECRET_KEY, algorithms=["HS256"])
+        user_email = payload["email"]
 
-        # Retrieve the existing transcript from the database
-        existing_transcript = db.transcripts.find_one({"_id": transcript_object_id})
-        if not existing_transcript:
-            raise HTTPException(status_code=404, detail="Transcript not found")
+        # Fetch user from the database based on email
+        user = db.profiles.find_one({"email": user_email})
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
 
-        # Prepare the update fields
+        # Update user profile with new information
         update_fields = {}
+        if profile_info.name != user["name"]:
+            update_fields["name"] = profile_info.name
+        if profile_info.about != user["about"]:
+            update_fields["about"] = profile_info.about
+        if profile_info.password != user["password"]:
+            update_fields["password"] = profile_info.password  # Note: You may want to hash the password before updating
 
-        # Iterate over each field in the UpdateTranscriptRequest model
-        for field, value in transcript_info.dict().items():
-            # Skip the transcript_id field
-            if field == "transcript_id":
-                continue
-            
-            # Compare the field value with the existing transcript
-            existing_value = existing_transcript.get(field)
-            if value != existing_value:
-                update_fields[field] = value
-            else:
-                # If the values are the same, keep the existing value
-                update_fields[field] = existing_value
-
-        # Include unchanged fields in the update operation
-        for field, value in existing_transcript.items():
-            if field not in update_fields:
-                update_fields[field] = value
-
-        # Update the existing transcript with the changes from the update request
         if update_fields:
-            db.transcripts.update_one(
-                {"_id": transcript_object_id},
+            db.profiles.update_one(
+                {"email": user_email},
                 {"$set": update_fields}
             )
 
-        # Fetch the updated transcript from the database
-        updated_transcript = db.transcripts.find_one({"_id": transcript_object_id})
-        updated_transcript_data = UpdateTranscriptRequest(**updated_transcript)
-        return updated_transcript_data
+        # Fetch updated user profile from the database
+        updated_user = db.profiles.find_one({"email": user_email})
+        updated_user_profile = ProfileSchema(**updated_user)
+        return updated_user_profile
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
     except Exception as e:
-        raise HTTPException(status_code=500, detail="An error occurred while updating transcript")
+        raise HTTPException(status_code=500, detail="An error occurred while updating user profile")
+    
     
 
 @app.post("/transcripts/create_transcript")
@@ -278,27 +268,23 @@ async def create_transcript(
     return {"message":"Transcript Created successfully", "_id": str(result.inserted_id)}
 
 
-@app.post("/transcripts/get_transcripts_by_category_slug", response_model=List[Dict[str, Any]])
+@app.post("/transcripts/get_transcripts_by_category_slug", response_model=List[InterviewTranscriptSchema])
 async def get_transcripts_by_category_slug(reqBody: getTranscriptByCategoryRequestBody):
     try:
         transcripts = list(db.transcripts.find({"category_slug": reqBody.category_slug, "status": "Pending"}))
-        print(transcripts)
         if not transcripts:
-            raise HTTPException(status_code=404, detail="Transcripts not found")
-        for transcript in transcripts:
-            transcript['_id'] = str(transcript['_id'])
+            raise HTTPException(status_code=404, detail="Transcript not found")
         return transcripts
     except Exception as e:
         raise HTTPException(status_code=400, detail="Some Error Occurred: " + str(e))
 
 
-@app.post("/transcripts/get_transcript_by_url_slug", response_model=Dict[str, Any])
+@app.post("/transcripts/get_transcript_by_url_slug", response_model=InterviewTranscriptSchema)
 async def get_transcript_by_url_slug(reqBody: getTranscriptByCategoryRequestBody):
     try:
         transcript = db.transcripts.find_one({"slug": reqBody.category_slug, "status": "Pending"})
         if not transcript:
             raise HTTPException(status_code=404, detail="Transcript not found")
-        transcript['_id'] = str(transcript['_id'])
         return transcript
     except Exception as e:
         raise HTTPException(status_code=400, detail="Some Error Occurred: " + str(e))
