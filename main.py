@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, Depends,Header,Security
 from pydantic import BaseModel,EmailStr
 from database import db
 from bson import ObjectId  #unique ids assigned to each doc in mongo db
-from typing import List, Dict
+from typing import List, Dict, Any
 from basemodel import ProfileSchema,InterviewTranscriptSchema,SignUpRequest,SignInRequest, TranscriptRequestBody, getTranscriptByCategoryRequestBody, getTranscriptByStatusRequestBody,requestUserProfile,UpdateUserProfileRequest,UpdateTranscriptRequest
 from datetime import datetime, timezone,timedelta
 import hashlib
@@ -278,23 +278,27 @@ async def create_transcript(
     return {"message":"Transcript Created successfully", "_id": str(result.inserted_id)}
 
 
-@app.post("/transcripts/get_transcripts_by_category_slug", response_model=List[InterviewTranscriptSchema])
+@app.post("/transcripts/get_transcripts_by_category_slug", response_model=List[Dict[str, Any]])
 async def get_transcripts_by_category_slug(reqBody: getTranscriptByCategoryRequestBody):
     try:
         transcripts = list(db.transcripts.find({"category_slug": reqBody.category_slug, "status": "Pending"}))
+        print(transcripts)
         if not transcripts:
-            raise HTTPException(status_code=404, detail="Transcript not found")
+            raise HTTPException(status_code=404, detail="Transcripts not found")
+        for transcript in transcripts:
+            transcript['_id'] = str(transcript['_id'])
         return transcripts
     except Exception as e:
         raise HTTPException(status_code=400, detail="Some Error Occurred: " + str(e))
 
 
-@app.post("/transcripts/get_transcript_by_url_slug", response_model=InterviewTranscriptSchema)
+@app.post("/transcripts/get_transcript_by_url_slug", response_model=Dict[str, Any])
 async def get_transcript_by_url_slug(reqBody: getTranscriptByCategoryRequestBody):
     try:
         transcript = db.transcripts.find_one({"slug": reqBody.category_slug, "status": "Pending"})
         if not transcript:
             raise HTTPException(status_code=404, detail="Transcript not found")
+        transcript['_id'] = str(transcript['_id'])
         return transcript
     except Exception as e:
         raise HTTPException(status_code=400, detail="Some Error Occurred: " + str(e))
