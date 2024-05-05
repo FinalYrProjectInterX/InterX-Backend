@@ -48,6 +48,7 @@ class InterviewTranscriptSchema(BaseModel):
     additional_info: str = ""
     status: str = "Pending"
     image_proof: str
+    user_name: str
     questions_answers: List[Dict[str, str]] = []
     
 class SignUpRequest(BaseModel):
@@ -62,7 +63,6 @@ class SignInRequest(BaseModel):
 
 class TranscriptRequestBody(BaseModel):
     token: str
-    user_name: str
     interview_name: str
     category: str
     subCategory: str

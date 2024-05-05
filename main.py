@@ -278,9 +278,10 @@ async def create_transcript(transcript: TranscriptRequestBody):
     user_name = user_profile.get("name")
 
     transcript["user_name"] = user_name
+    transcript["user_id"] = user_email
     transcript["date"] = datetime.utcnow().isoformat()
     transcript["status"] = "pending"
-
+    print(transcript)
     result = db.transcripts.insert_one(transcript)
 
     return {"message": "Transcript Created successfully", "_id": str(result.inserted_id)}
