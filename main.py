@@ -289,7 +289,7 @@ async def create_transcript(transcript: TranscriptRequestBody):
 @app.post("/transcripts/get_transcripts_by_category_slug", response_model=List[Dict[str, Any]])
 async def get_transcripts_by_category_slug(reqBody: getTranscriptByCategoryRequestBody):
     try:
-        transcripts = list(db.transcripts.find({"category_slug": reqBody.category_slug, "status": "pending"}))
+        transcripts = list(db.transcripts.find({"category_slug": reqBody.category_slug, "status": "Approved"}))
         print(transcripts)
         if not transcripts:
             raise HTTPException(status_code=404, detail="Transcripts not found")
