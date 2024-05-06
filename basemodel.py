@@ -103,6 +103,9 @@ class getTranscriptByCategoryRequestBody(BaseModel):
 class getTranscriptByStatusRequestBody(BaseModel):
     status: str
     
+class getTranscriptsOfUserReqBody(BaseModel):
+    email: str
+    
 
 class UpdateTranscriptRequest(BaseModel):
     transcript_id: str

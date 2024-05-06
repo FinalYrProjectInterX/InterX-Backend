@@ -3,7 +3,7 @@ from pydantic import BaseModel,EmailStr
 from database import db
 from bson import ObjectId  #unique ids assigned to each doc in mongo db
 from typing import List, Dict, Any
-from basemodel import ProfileSchema,InterviewTranscriptSchema,SignUpRequest,SignInRequest, TranscriptRequestBody, getTranscriptByCategoryRequestBody, getTranscriptByStatusRequestBody,requestUserProfile,UpdateUserProfileRequest,UpdateTranscriptRequest
+from basemodel import ProfileSchema,InterviewTranscriptSchema,SignUpRequest,SignInRequest, TranscriptRequestBody, getTranscriptByCategoryRequestBody, getTranscriptByStatusRequestBody,requestUserProfile,UpdateUserProfileRequest,UpdateTranscriptRequest, getTranscriptsOfUserReqBody
 from datetime import datetime, timezone,timedelta
 import hashlib
 from jose import jwt, JWTError
@@ -219,7 +219,7 @@ async def update_user_profile(profile_info: UpdateUserProfileRequest):
             update_fields["name"] = profile_info.name
         if profile_info.about != user["about"]:
             update_fields["about"] = profile_info.about
-        if profile_info.password != user["password"]:
+        if profile_info.password != "":
             update_fields["password"] = profile_info.password  # Note: You may want to hash the password before updating
 
         if update_fields:
@@ -293,6 +293,17 @@ async def get_transcripts_by_category_slug(reqBody: getTranscriptByCategoryReque
         print(transcripts)
         if not transcripts:
             raise HTTPException(status_code=404, detail="Transcripts not found")
+        for transcript in transcripts:
+            transcript['_id'] = str(transcript['_id'])
+        return transcripts
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="Some Error Occurred: " + str(e))
+    
+@app.post("/transcripts/get_transcripts_related_to_user", response_model=List[Dict[str, Any]])
+async def get_transcripts_related_to_user(reqBody: getTranscriptsOfUserReqBody):
+    try:
+        transcripts = list(db.transcripts.find({"user_id": reqBody.email}))
+        print(transcripts)
         for transcript in transcripts:
             transcript['_id'] = str(transcript['_id'])
         return transcripts
