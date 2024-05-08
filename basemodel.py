@@ -11,6 +11,8 @@ class ProfileSchema(BaseModel):
 class requestUserProfile(BaseModel):
     token: str
     
+class requestemail(BaseModel):
+    email: EmailStr    
 
 class UpdateUserProfileRequest(BaseModel):
     token: str

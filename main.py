@@ -3,7 +3,7 @@ from pydantic import BaseModel,EmailStr
 from database import db
 from bson import ObjectId  #unique ids assigned to each doc in mongo db
 from typing import List, Dict, Any
-from basemodel import ProfileSchema,InterviewTranscriptSchema,SignUpRequest,SignInRequest, TranscriptRequestBody, getTranscriptByCategoryRequestBody, getTranscriptByStatusRequestBody,requestUserProfile,UpdateUserProfileRequest,UpdateTranscriptRequest, getTranscriptsOfUserReqBody
+from basemodel import ProfileSchema,InterviewTranscriptSchema,SignUpRequest,requestemail,SignInRequest, TranscriptRequestBody, getTranscriptByCategoryRequestBody, getTranscriptByStatusRequestBody,requestUserProfile,UpdateUserProfileRequest,UpdateTranscriptRequest, getTranscriptsOfUserReqBody
 from datetime import datetime, timezone,timedelta
 import hashlib
 from jose import jwt, JWTError
@@ -11,7 +11,12 @@ from fastapi.security import HTTPBearer
 from fastapi.security.http import HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List
-
+import smtplib
+from email.mime.application import MIMEApplication
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.utils import COMMASPACE, formatdate
+from emailer import EMAILER
 #from utils import authenticate_user
 
 
@@ -106,6 +111,7 @@ async def sign_in(signin_request: SignInRequest):
     else:
         raise HTTPException(status_code=400, detail="Invalid Credentials!!")
 
+'''
 @app.put("/admin/transcripts/approve/{transcript_id}")
 async def approve_transcript(transcript_id: str):
     try:
@@ -134,7 +140,7 @@ async def reject_transcript(transcript_id: str):
         return {"message": "Transcript rejected successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail="An error occurred while rejecting transcript")
-
+'''
 
 # @app.put("/admin/transcripts/approve/{transcript_slug}")
 # async def approve_transcript(transcript_slug: str):
@@ -418,6 +424,52 @@ async def delete_transcript(transcript_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail="An error occurred while deleting transcript")
     
+ 
+ 
+mail = EMAILER()
+
+@app.put("/admin/transcripts/approve/{transcript_id}")
+async def approve_transcript(transcript_id: str, user_email: requestemail):
+    try:
+        # Update the status of the transcript to "Approved"
+        result = db.transcripts.update_one({"_id": ObjectId(transcript_id)}, {"$set": {"status": "Approved"}})
+        
+        # Check if the transcript was found and updated
+        if result.modified_count == 0:
+            raise HTTPException(status_code=404, detail="Transcript not found")
+        
+        # Send email to user
+        u_email= user_email.email
+        subject = "Transcript Approval Notification"
+        body = "Your transcript has been approved by the admin."
+        mail.send(subject,u_email,body)
+        
+        return {"message": "Transcript approved successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An error occurred while approving transcript")
+
+
+@app.put("/admin/transcripts/reject/{transcript_id}")
+async def reject_transcript(transcript_id: str, user_email: requestemail):
+    try:
+        # Update the status of the transcript to "Rejected"
+        result = db.transcripts.update_one({"_id": ObjectId(transcript_id)}, {"$set": {"status": "Rejected"}})
+        
+        # Check if the transcript was found and updated
+        if result.modified_count == 0:
+            raise HTTPException(status_code=404, detail="Transcript not found")
+        
+        # Send email to user
+        u_email= user_email.email
+        subject = "Transcript Rejection Notification"
+        body = "Your transcript has been rejected by the admin."
+        mail.send(subject,u_email,body)
+        
+        return {"message": "Transcript rejected successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An error occurred while rejecting transcript")
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app)
