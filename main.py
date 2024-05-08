@@ -424,8 +424,36 @@ async def delete_transcript(transcript_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail="An error occurred while deleting transcript")
     
- 
- 
+    
+'''
+SMTP_SERVER = 'smtp.gmail.com'
+SMTP_PORT = 465  
+SMTP_USERNAME = 'mitali.lohar2002@gmail.com'
+SMTP_PASSWORD = 'meet.182630'
+SENDER_EMAIL = 'mitali.lohar2002@gmail.com'
+
+def send_email(sender_address, sender_pass, receiver_address, subject, body):
+    try:    
+        
+        msg = MIMEMultipart()
+        msg['From'] = sender_address
+        msg['To'] = receiver_address
+        msg['Date'] = formatdate(localtime=True)
+        msg['Subject'] = subject
+        msg.attach(MIMEText(body))
+
+        session = smtplib.SMTP('smtp.gmail.com', 587)  # use gmail with port
+        session.starttls()  # enable security
+        session.login(sender_address, sender_pass)  # login with mail_id and password
+        text = msg.as_string()
+        session.sendmail(sender_address, receiver_address, text)
+        session.quit()
+        print('Mail Sent to', receiver_address)
+
+    except Exception as e:
+        print('Error:', e)
+        raise Exception("Mail not sent")
+'''
 mail = EMAILER()
 
 @app.put("/admin/transcripts/approve/{transcript_id}")

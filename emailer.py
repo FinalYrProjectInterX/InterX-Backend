@@ -18,7 +18,7 @@ class EMAILER():
         self.MAIL_SERVER = "smtp.gmail.com"
         self.PORT = 465
 
-    def send(self, subject, email, content) -> None:
+    def send(self, subject, email, plain_text_content) -> None:
 
         # Construct Secure Email
         ssl_context = ssl.create_default_context()
@@ -26,7 +26,7 @@ class EMAILER():
         msg["From"] = self.EMAIL_ADDRESS
         msg["To"] = email
         msg["Subject"] = subject
-        msg.add_alternative(content, subtype="html")
+        msg.set_content(plain_text_content)
 
         # Send Email
         with smtplib.SMTP_SSL(self.MAIL_SERVER, self.PORT, context=ssl_context) as smtp:
