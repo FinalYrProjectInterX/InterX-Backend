@@ -99,39 +99,15 @@ class TranscriptRequestBody(BaseModel):
 
 class getTranscriptByCategoryRequestBody(BaseModel):
     category_slug: str
-    
-    
 
 class getTranscriptByStatusRequestBody(BaseModel):
     status: str
     
 class getTranscriptsOfUserReqBody(BaseModel):
     email: str
-    
 
 class UpdateTranscriptRequest(BaseModel):
     transcript_id: str
-    interview_name: str
-    category: str
-    subCategory: str
-    optional_subject: str
-    gap_years: str
-    year_of_interview: str
-    specialization: str
-    work_experience: str
-    exam_scores: str
-    visa_type: str
-    country_applied_for_visa: str
-    purpose_of_travel: str
-    programming_languages: str
-    tech_stack_used: str
-    branch: str
-    commision_type: str
-    bank_name: str
     interview_experience: str
     interview_tips: str
-    rating: float
-    category_slug: str
-    slug: str
-    status: str
     questions_answers: List[Dict[str, str]]

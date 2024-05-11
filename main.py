@@ -342,38 +342,25 @@ async def get_transcripts_by_status(reqBody: getTranscriptByStatusRequestBody):
     
     
     
-@app.put("/transcripts/update",response_model=InterviewTranscriptSchema)
-async def update_transcript(transcript_info: UpdateTranscriptRequest):
+@app.post("/transcripts/update_transcript")
+async def update_transcript(reqBody: UpdateTranscriptRequest):
     try:
-        # Convert transcript_id to ObjectId
-        transcript_object_id = ObjectId(transcript_info.transcript_id)
-
-        # Retrieve existing transcript from the database
+        print(reqBody)
+        transcript_object_id = ObjectId(reqBody.transcript_id)
         existing_transcript = db.transcripts.find_one({"_id": transcript_object_id})
         if not existing_transcript:
             raise HTTPException(status_code=404, detail="Transcript not found")
 
-        # Prepare update fields
-        update_fields = {}
-        for field, value in transcript_info.dict().items():
-            # Skip transcript_id field
-            if field == "transcript_id":
-                continue
-            
-            # Check if value has changed
-            if value != existing_transcript.get(field):
-                update_fields[field] = value
-            else:
-                # Retain the old value if field is not changed
-                update_fields[field] = existing_transcript.get(field)
-
-        # Update the existing transcript with the changes
-        if update_fields:
-            db.transcripts.update_one({"_id": transcript_object_id}, {"$set": update_fields})
-
-        # Fetch updated transcript from the database
-        updated_transcript = db.transcripts.find_one({"_id": transcript_object_id})
-        return updated_transcript
+        # Update transcript fields
+        update_data = {
+            "$set": {
+                "interview_experience": reqBody.interview_experience,
+                "interview_tips": reqBody.interview_tips,
+                "questions_answers": reqBody.questions_answers
+            }
+        }
+        db.transcripts.update_one({"_id": transcript_object_id}, update_data)
+        return {"message": "Transcript updated successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail="An error occurred while updating transcript")
 
@@ -458,23 +445,22 @@ mail = EMAILER()
 
 @app.put("/admin/transcripts/approve/{transcript_id}")
 async def approve_transcript(transcript_id: str, user_email: requestemail):
-    try:
-        # Update the status of the transcript to "Approved"
-        result = db.transcripts.update_one({"_id": ObjectId(transcript_id)}, {"$set": {"status": "Approved"}})
+    # try:
+        # result = db.transcripts.update_one({"_id": ObjectId(transcript_id)}, {"$set": {"status": "Approved"}})
         
-        # Check if the transcript was found and updated
-        if result.modified_count == 0:
-            raise HTTPException(status_code=404, detail="Transcript not found")
+        # if result.modified_count == 0:
+        #     raise HTTPException(status_code=404, detail="Transcript not found")
         
         # Send email to user
         u_email= user_email.email
+        print(u_email)
         subject = "Transcript Approval Notification"
         body = "Your transcript has been approved by the admin."
         mail.send(subject,u_email,body)
         
         return {"message": "Transcript approved successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An error occurred while approving transcript")
+    # except Exception as e:
+    #     raise HTTPException(status_code=500, detail="An error occurred while approving transcript")
 
 
 @app.put("/admin/transcripts/reject/{transcript_id}")

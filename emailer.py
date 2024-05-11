@@ -11,10 +11,9 @@ class EMAILER():
 
     def __init__(self) -> None:
 
-        # Load Email Server with Credentials
         load_dotenv()
         self.EMAIL_ADDRESS = os.environ.get("EMAIL_ADD")
-        self.EMAIL_PASSWORD = os.environ.get("EMAIL_PASS")
+        self.EMAIL_PASSWORD = "ljud omry uewh wlte"
         self.MAIL_SERVER = "smtp.gmail.com"
         self.PORT = 465
 
@@ -27,7 +26,8 @@ class EMAILER():
         msg["To"] = email
         msg["Subject"] = subject
         msg.set_content(plain_text_content)
-
+        print(msg)
+        print(self.MAIL_SERVER, self.PORT, self.EMAIL_ADDRESS, self.EMAIL_PASSWORD)
         # Send Email
         with smtplib.SMTP_SSL(self.MAIL_SERVER, self.PORT, context=ssl_context) as smtp:
             smtp.login(self.EMAIL_ADDRESS, self.EMAIL_PASSWORD)
