@@ -445,11 +445,11 @@ mail = EMAILER()
 
 @app.put("/admin/transcripts/approve/{transcript_id}")
 async def approve_transcript(transcript_id: str, user_email: requestemail):
-    # try:
-        # result = db.transcripts.update_one({"_id": ObjectId(transcript_id)}, {"$set": {"status": "Approved"}})
+    try:
+        result = db.transcripts.update_one({"_id": ObjectId(transcript_id)}, {"$set": {"status": "Approved"}})
         
-        # if result.modified_count == 0:
-        #     raise HTTPException(status_code=404, detail="Transcript not found")
+        if result.modified_count == 0:
+            raise HTTPException(status_code=404, detail="Transcript not found")
         
         # Send email to user
         u_email= user_email.email
@@ -459,8 +459,8 @@ async def approve_transcript(transcript_id: str, user_email: requestemail):
         mail.send(subject,u_email,body)
         
         return {"message": "Transcript approved successfully"}
-    # except Exception as e:
-    #     raise HTTPException(status_code=500, detail="An error occurred while approving transcript")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An error occurred while approving transcript")
 
 
 @app.put("/admin/transcripts/reject/{transcript_id}")

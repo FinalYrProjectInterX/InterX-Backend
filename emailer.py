@@ -13,7 +13,7 @@ class EMAILER():
 
         load_dotenv()
         self.EMAIL_ADDRESS = os.environ.get("EMAIL_ADD")
-        self.EMAIL_PASSWORD = "ljud omry uewh wlte"
+        self.EMAIL_PASSWORD = os.environ.get("EMAIL_PASS")
         self.MAIL_SERVER = "smtp.gmail.com"
         self.PORT = 465
 
