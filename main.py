@@ -412,35 +412,7 @@ async def delete_transcript(transcript_id: str):
         raise HTTPException(status_code=500, detail="An error occurred while deleting transcript")
     
     
-'''
-SMTP_SERVER = 'smtp.gmail.com'
-SMTP_PORT = 465  
-SMTP_USERNAME = 'mitali.lohar2002@gmail.com'
-SMTP_PASSWORD = 'meet.182630'
-SENDER_EMAIL = 'mitali.lohar2002@gmail.com'
 
-def send_email(sender_address, sender_pass, receiver_address, subject, body):
-    try:    
-        
-        msg = MIMEMultipart()
-        msg['From'] = sender_address
-        msg['To'] = receiver_address
-        msg['Date'] = formatdate(localtime=True)
-        msg['Subject'] = subject
-        msg.attach(MIMEText(body))
-
-        session = smtplib.SMTP('smtp.gmail.com', 587)  # use gmail with port
-        session.starttls()  # enable security
-        session.login(sender_address, sender_pass)  # login with mail_id and password
-        text = msg.as_string()
-        session.sendmail(sender_address, receiver_address, text)
-        session.quit()
-        print('Mail Sent to', receiver_address)
-
-    except Exception as e:
-        print('Error:', e)
-        raise Exception("Mail not sent")
-'''
 mail = EMAILER()
 
 @app.put("/admin/transcripts/approve/{transcript_id}")
@@ -455,7 +427,27 @@ async def approve_transcript(transcript_id: str, user_email: requestemail):
         u_email= user_email.email
         print(u_email)
         subject = "Transcript Approval Notification"
-        body = "Your transcript has been approved by the admin."
+        body = """<html>
+    <body style="margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, Helvetica, sans-serif;">
+        <div style="width: 100%; background: #efefef; border-radius: 10px; padding: 10px;">
+            <div style="margin: 0 auto; width: 90%; text-align: center;">
+                <h2 style="background-color: rgb(20, 38, 66); padding: 10px 10px; border-radius: 3px; color: white;">Transcript Approval Notification!</h2>
+                <div style="margin: 30px auto; background: white; width: 60%; border-radius: 10px; padding: 50px; text-align: center;">
+                    <h3 style="margin-bottom: 30px; font-size: 20px; color: black;">Your transcript has been approved by the admin :)</h3>
+                    <img src="https://static.vecteezy.com/system/resources/thumbnails/012/199/389/small_2x/thank-you-words-on-notepad-and-office-supplies-free-photo.jpg" alt="Approved Image" style="margin-bottom: 30px; max-width: 100%;">
+                    <p style="margin-bottom: 30px; color: black;">Want to contribute more? Click below </p>
+                    <a style="display: block; margin: 0 auto; border: none; background-color: rgb(15, 42, 100); color: white; width: 50%; line-height: 24px; padding: 10px; font-size: 20px; border-radius: 10px; cursor: pointer; text-decoration: none;"
+                        href="inter-x-frontend.vercel.app/contribute"
+                        target="_blank"
+                    >
+                        Let's Go
+                    </a>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
+"""
         mail.send(subject,u_email,body)
         
         return {"message": "Transcript approved successfully"}
@@ -476,7 +468,26 @@ async def reject_transcript(transcript_id: str, user_email: requestemail):
         # Send email to user
         u_email= user_email.email
         subject = "Transcript Rejection Notification"
-        body = "Your transcript has been rejected by the admin."
+        body = """<html>
+    <body style="margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, Helvetica, sans-serif;">
+        <div style="width: 100%; background: #efefef; border-radius: 10px; padding: 10px;">
+            <div style="margin: 0 auto; width: 90%; text-align: center;">
+                <h2 style="background-color: rgb(20, 38, 66); padding: 10px 10px; border-radius: 3px; color: white;">Transcript Rejection Notification!</h2>
+                <div style="margin: 30px auto; background: white; width: 60%; border-radius: 10px; padding: 50px; text-align: center;">
+                    <h3 style="margin-bottom: 30px; font-size: 18px; color: black;">Your transcript has been rejected by the admin!! Please attach a valid proof of your interview call.</h3>
+                   
+                    <p style="margin-bottom: 30px; color: black;">Contribute again? Click below </p>
+                    <a style="display: block; margin: 0 auto; border: none; background-color: rgb(15, 42, 100); color: white; width: 50%; line-height: 24px; padding: 10px; font-size: 20px; border-radius: 10px; cursor: pointer; text-decoration: none;"
+                        href="inter-x-frontend.vercel.app/contribute"
+                        target="_blank"
+                    >
+                        Let's Go
+                    </a>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>"""
         mail.send(subject,u_email,body)
         
         return {"message": "Transcript rejected successfully"}
