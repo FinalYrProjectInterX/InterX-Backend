@@ -90,7 +90,7 @@ async def sign_in(signin_request: SignInRequest):
 
 @app.post("/admin/login/")
 async def sign_in(signin_request: SignInRequest):
-    ALLOWED_EMAILS = {'sujalsahu0804@gmail.com', 'mitali@gmail.com', 'umang@gmail.com'}
+    ALLOWED_EMAILS = {'admin@example.com'}
     if signin_request.email in ALLOWED_EMAILS and signin_request.password=='InterAdminX@12345':
         user = db.profiles.find_one({"email": signin_request.email})
 
@@ -141,35 +141,6 @@ async def reject_transcript(transcript_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail="An error occurred while rejecting transcript")
 '''
-
-# @app.put("/admin/transcripts/approve/{transcript_slug}")
-# async def approve_transcript(transcript_slug: str):
-#     try:
-#         # Update the status of the transcript to "Approved"
-#         result = db.transcripts.update_one({"slug": transcript_slug}, {"$set": {"status": "Approved"}})
-        
-#         # Check if the transcript was found and updated
-#         if result.modified_count == 0:
-#             raise HTTPException(status_code=404, detail="Transcript not found")
-        
-#         return {"message": "Transcript approved successfully"}
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail="An error occurred while approving transcript")
-    
-
-# @app.put("/admin/transcripts/reject/{transcript_slug}")
-# async def reject_transcript(transcript_slug: str):
-#     try:
-#         # Update the status of the transcript to "Rejected"
-#         result = db.transcripts.update_one({"slug": transcript_slug}, {"$set": {"status": "Rejected"}})
-        
-#         # Check if the transcript was found and updated
-#         if result.modified_count == 0:
-#             raise HTTPException(status_code=404, detail="Transcript not found")
-        
-#         return {"message": "Transcript rejected successfully"}
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail="An error occurred while rejecting transcript")
 
 
 async def authenticate_user(token: str):
