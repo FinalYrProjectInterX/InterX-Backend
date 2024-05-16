@@ -290,7 +290,7 @@ async def get_transcripts_related_to_user(reqBody: getTranscriptsOfUserReqBody):
 @app.post("/transcripts/get_transcript_by_url_slug", response_model=Dict[str, Any])
 async def get_transcript_by_url_slug(reqBody: getTranscriptByCategoryRequestBody):
     try:
-        transcript = db.transcripts.find_one({"slug": reqBody.category_slug, "status": "Approved"})
+        transcript = db.transcripts.find_one({"slug": reqBody.category_slug})
         if not transcript:
             raise HTTPException(status_code=404, detail="Transcript not found")
         transcript['_id'] = str(transcript['_id'])
