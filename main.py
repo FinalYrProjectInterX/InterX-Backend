@@ -363,6 +363,32 @@ async def like_transcript(transcript_id: str):
         raise HTTPException(status_code=500, detail="An error occurred while liking the transcript")
 
 
+@app.put("/transcripts/unlike/{transcript_id}", response_model=InterviewTranscriptSchema)
+async def unlike_transcript(transcript_id: str):
+    try:
+        # Convert transcript_id to ObjectId
+        transcript_object_id = ObjectId(transcript_id)
+
+        # Retrieve the transcript from the database
+        transcript = db.transcripts.find_one({"_id": transcript_object_id})
+        if not transcript:
+            raise HTTPException(status_code=404, detail="Transcript not found")
+
+        # Increment the rating by 1
+        transcript['rating'] -= 1
+
+        # Update the transcript in the database
+        db.transcripts.update_one({"_id": transcript_object_id}, {"$set": {"rating": transcript['rating']}})
+
+        # Convert ObjectId to string
+        transcript['_id'] = str(transcript['_id'])
+
+        # Return the updated transcript
+        return transcript
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An error occurred while unliking the transcript")
+    
+
 @app.delete("/transcripts/{transcript_id}")
 async def delete_transcript(transcript_id: str):
     try:
