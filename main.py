@@ -91,7 +91,7 @@ async def sign_in(signin_request: SignInRequest):
 @app.post("/admin/login/")
 async def sign_in(signin_request: SignInRequest):
     ALLOWED_EMAILS = {'admin@example.com'}
-    if signin_request.email in ALLOWED_EMAILS and signin_request.password=='InterAdminX@12345':
+    if signin_request.email in ALLOWED_EMAILS and signin_request.password=='admin':
         user = db.profiles.find_one({"email": signin_request.email})
 
         if not user:
