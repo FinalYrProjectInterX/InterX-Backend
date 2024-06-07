@@ -54,8 +54,7 @@ async def sign_up(signup_request: SignUpRequest):
         })
 
         token_data = {
-            "email": profile.email,
-            "exp": datetime.now(timezone.utc)+ timedelta(days=2)
+            "email": profile.email
         }
         token = jwt.encode(token_data, SECRET_KEY, algorithm="HS256")
 
@@ -79,8 +78,7 @@ async def sign_in(signin_request: SignInRequest):
 
         # Generate JWT token
         token_data = {
-            "email": user["email"],
-            "exp": datetime.now(timezone.utc)+ timedelta(days=2)
+            "email": user["email"]
         }
         token = jwt.encode(token_data, SECRET_KEY, algorithm="HS256")
 
@@ -102,8 +100,7 @@ async def sign_in(signin_request: SignInRequest):
             raise HTTPException(status_code=400, detail="Invalid email or password.")
 
         token_data = {
-            "email": user["email"],
-            "exp": datetime.now(timezone.utc) + timedelta(days=2)
+            "email": user["email"]
         }
         token = jwt.encode(token_data, SECRET_KEY, algorithm="HS256")
 
